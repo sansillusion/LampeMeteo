@@ -12,8 +12,8 @@
 #include <Preferences.h>
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
-String openWeatherID = "yourkeyhere";
-String googleMapsID = "yourkeyhere";
+String openWeatherID = "YourKeyHere";
+String googleMapsID = "YourKeyHere";
 unsigned long timerd = 0;
 String username;
 String pass;
@@ -21,7 +21,7 @@ String latitude;
 String longitude;
 String forecast;
 String msg;
-#define LED_PIN1     12
+#define LED_PIN1     18
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    18
@@ -791,12 +791,13 @@ void request_weather() {
 
 void loop1(void *pvParameters) {
   while (1) {
+    server.handleClient();
     unsigned long now = millis();
     if (now > HOURS_TO_REQUEST_WEATHER * 3600000 && ((now - timerd) > HOURS_TO_REQUEST_WEATHER * 3600000 || (now - timerd) < 0)) {
       timerd = millis();
       request_weather();
     }
-    vTaskDelay( 64 / portTICK_PERIOD_MS ); // wait / yield time to other tasks
+    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait / yield time to other tasks
   }
 }
 
@@ -838,11 +839,10 @@ void setup() {
   MDNS.addService("_http", "_tcp", 80);
   //Serial.print("Server parti");
   request_weather();
-  //  xTaskCreatePinnedToCore(loop1, "loop1", 2048, NULL, 0, NULL, 0);
+  xTaskCreatePinnedToCore(loop1, "loop1", 4096, NULL, 2, NULL, 0);
 }
 
 void loop() {
-  server.handleClient();
   if (effect == FIRE) {
     Fire2012(leds1);
   }
