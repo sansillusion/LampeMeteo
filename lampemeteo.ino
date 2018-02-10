@@ -21,6 +21,7 @@ String latitude;
 String longitude;
 String forecast;
 String msg;
+String derncoul = "";
 #define LED_PIN1     18
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2812B
@@ -43,6 +44,9 @@ int RAIN       =   3;
 int THUNDERSTORM = 4;
 int SNOW        =  5;
 WebServer server(80);
+int rouge = 0;
+int vert = 0;
+int bleu = 0;
 
 // convert string 2 char*
 char* string2char(String command) {
@@ -54,28 +58,16 @@ char* string2char(String command) {
 
 void change_state(String choice) {
   if (choice == "r\n") {
-    color.r = 255;
-    preferences.putUInt("RED_ADDR", 255);
-  }
-  else if (choice == "nr\n") {
-    color.r = 0;
-    preferences.putUInt("RED_ADDR", 0);
+    rouge = color.r;
+    preferences.putUInt("RED_ADDR", color.r);
   }
   else if (choice == "g\n") {
-    color.g = 255;
-    preferences.putUInt("GREEN_ADDR", 255);
-  }
-  else if (choice == "ng\n") {
-    color.g = 0;
-    preferences.putUInt("GREEN_ADDR", 0);
+    vert = color.g;
+    preferences.putUInt("GREEN_ADDR", color.g);
   }
   else if (choice == "b\n") {
-    color.b = 255;
-    preferences.putUInt("BLUE_ADDR", 255);
-  }
-  else if (choice == "nb\n") {
-    color.b = 0;
-    preferences.putUInt("BLUE_ADDR", 0);
+    bleu = color.b;
+    preferences.putUInt("BLUE_ADDR", color.b);
   }
   else if (choice == "bu\n") {
     if (brightness <= 75) {
@@ -109,7 +101,6 @@ void change_state(String choice) {
     effect = NO_EFFECT;
     preferences.putUInt("EFFECT_ADDR", NO_EFFECT);
   }
-
   else if (choice == "ws\n") {
     weather = CLEAR;
     preferences.putUInt("WEATHER_ADDR", weather);
@@ -130,19 +121,18 @@ void change_state(String choice) {
     weather = SNOW;
     preferences.putUInt("WEATHER_ADDR", weather);
   }
-
   if (effect == NO_EFFECT) {
     for ( int j = 0; j < NUM_LEDS2; j++) {
       leds1[j] = color;
     }
   }
-
   // exponential mapping
   int expBrightness = brightness * brightness;
   FastLED.setBrightness(map(expBrightness, 0, 10000, 0, 143));
   //   delay(1);
   FastLED.show();
   //   delay(1);
+  vTaskDelay(20);
 }
 
 void Fire2012(CRGB leds[NUM_LEDS2]) {
@@ -606,32 +596,29 @@ void handleRoot() {                                                             
   //  if (!server.authenticate(username, string2char(pass))) {
   //    return server.requestAuthentication();
   //  }
-  if (server.hasArg("Color")) {
-    if (server.arg("Color") == "Red") {
-      if (color.r == 0) {
+  if (server.hasArg("COULEUR")) {
+    String testteu = server.arg("COULEUR");
+    if (testteu != 0) {
+      derncoul = testteu;
+      long number = strtol( &testteu[1], NULL, 16);
+      color.r = number >> 16;
+      color.g = number >> 8 & 0xFF;
+      color.b = number & 0xFF;
+      vTaskDelay(20);
+      preferences.putString("derncoul", derncoul);
+      vTaskDelay(20);
+      if (color.r != rouge) {
         change_state("r\n");
       }
-      else {
-        change_state("nr\n");
-      }
-    }
-    else if (server.arg("Color") == "Green") {
-      if (color.g == 0) {
+      if (color.g != vert) {
         change_state("g\n");
       }
-      else {
-        change_state("ng\n");
-      }
-    }
-    else if (server.arg("Color") == "Blue") {
-      if (color.b == 0) {
+      if (color.b != bleu) {
         change_state("b\n");
-      }
-      else {
-        change_state("nb\n");
       }
     }
   }
+
   if (server.hasArg("Effect")) {
     if (server.arg("Effect") == "Fire") {
       if (effect != FIRE) {
@@ -667,35 +654,27 @@ void handleRoot() {                                                             
       }
     }
   }
-  String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />";
-  content += "<meta name='viewport' content='width=device-width; initial-scale=1.0; maximum-scale=1.0;'>";
-  content += "<html><body style='text-align:center;'><form method='POST' action=''>";
-  content += "<span style='font-size:30px'>Colors</span><br>";
-  content += "<input type='Submit' name='Color' value='Red' style='height:50px; width:120px; margin:10px; font-size:0px; background-color:red; color:white; opacity:";
-  content += (color.r == 0) ? "0.5;'" : "1.0;'";
-  content += (effect != NO_EFFECT) ? " disabled>" : ">";
-  content += "<input type='Submit' name='Color' value='Green' style='height:50px; width:120px; margin:10px; font-size:0px; background-color:green; color:white; opacity:";
-  content += (color.g == 0) ? "0.5;'" : "1.0;'";
-  content += (effect != NO_EFFECT) ? " disabled>" : ">";
-  content += "<br>";
-  content += "<input type='Submit' name='Color' value='Blue' style='height:50px; width:120px; margin:10px; font-size:0px; background-color:blue; color:white; opacity:";
-  content += (color.b == 0) ? "0.5;'" : "1.0;'";
-  content += (effect != NO_EFFECT) ? " disabled>" : ">";
-  content += "<br><br>";
-  content += "<span style='font-size:30px'>Effects</span><br>";
+  String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />\n";
+  content += "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>\n";
+  content += "<html><body style='text-align:center;'><form method='POST' action=''>\n";
+  content += "<span style='font-size:30px'>Colors</span><br>\n";
+  content += "<input id=\"colorpad\" type=\"color\" name=\"COULEUR\" class=\"color\" value=\"" + derncoul + "\" style=\"height:50px; width:120px; margin:1px\" onchange=\"this.form.submit()\"";
+  content += (effect != NO_EFFECT) ? " disabled>" : ">\n";
+  content += "<br><br>\n";
+  content += "<span style='font-size:30px'>Effects</span><br>\n";
   content += "<input type='Submit' name='Effect' value='Fire' style=\"height:50px; width:120px; margin:10px; font-size:0px; background-image:url('https://s3.amazonaws.com/spoonflower/public/design_thumbnails/0167/7306/rrFirePattern-01_shop_preview.png'); color:white; opacity:";
-  content += (effect == FIRE) ? "1.0;\">" : "0.5;\">";
+  content += (effect == FIRE) ? "1.0;\">" : "0.5;\">\n";
   content += "<input type='Submit' name='Effect' value='Weather' style=\"height:50px; width:120px; margin:10px; font-size:0px; background-image:url('http://images.all-free-download.com/images/graphiclarge/transparent_water_drops_design_background_vector_542481.jpg'); color:white; opacity:";
-  content += (effect == WEATHER) ? "1.0;\">" : "0.5;\">";
-  content += "<br><br>";
-  content += "<span style='font-size:30px'>Brightness<br>";
-  content += "<input type='Submit' name='Brightness' value='+' style='height:50px; width:120px; margin:10px; font-size:30px;'><br>";
+  content += (effect == WEATHER) ? "1.0;\">" : "0.5;\"\n>";
+  content += "<br><br>\n";
+  content += "<span style='font-size:30px'>Brightness<br>\n";
+  content += "<input type='Submit' name='Brightness' value='+' style='height:50px; width:120px; margin:10px; font-size:30px;'><br>\n";
   content += brightness;
-  content += "%<br></span><input type='Submit' name='Brightness' value='-' style='height:50px; width:120px; margin:10px; font-size:30px;'>";
-  content += "</form><br>";
-  content += "<a href='/admin_settings'>Admin Settings</a><br>";
-  content += "<a href='/weather_settings'>Weather Settings</a><br><br>";
-  content += "</body></html>";
+  content += "%<br></span><input type='Submit' name='Brightness' value='-' style='height:50px; width:120px; margin:10px; font-size:30px;'>\n";
+  content += "</form><br>\n";
+  content += "<a href='/admin_settings'>Admin Settings</a><br>\n";
+  content += "<a href='/weather_settings'>Weather Settings</a><br><br>\n";
+  content += "</body></html>\n";
   server.send(200, "text/html", content);
 }
 
@@ -764,23 +743,33 @@ void request_weather() {
   String weatherString =  payload.substring(pos + 1, payload.indexOf("\"", pos + 2));
   if (weatherString == "Clear") {
     weather = CLEAR;
-    change_state("ws\n");
+    if (previousWeather != weather) {
+      change_state("ws\n");
+    }
   }
   else if (weatherString == "Clouds") {
     weather = CLOUDS;
-    change_state("wc\n");
+    if (previousWeather != weather) {
+      change_state("wc\n");
+    }
   }
   else if (weatherString == "Rain" || weatherString == "Drizzle") {
     weather = RAIN;
-    change_state("wr\n");
+    if (previousWeather != weather) {
+      change_state("wr\n");
+    }
   }
   else if (weatherString == "Thunderstorm") {
     weather = THUNDERSTORM;
-    change_state("wt\n");
+    if (previousWeather != weather) {
+      change_state("wt\n");
+    }
   }
   else if (weatherString == "Snow") {
     weather = SNOW;
-    change_state("wx\n");
+    if (previousWeather != weather) {
+      change_state("wx\n");
+    }
   }
   if (previousWeather != weather) {
     Serial.println("different");
@@ -815,8 +804,12 @@ void setup() {
   color.r = preferences.getUInt("RED_ADDR", 255);
   color.g = preferences.getUInt("GREEN_ADDR", 255);
   color.b = preferences.getUInt("BLUE_ADDR", 255);
+  rouge = color.r;
+  vert = color.g;
+  bleu = color.b;
   effect = preferences.getUInt("EFFECT_ADDR", NO_EFFECT);
   weather = preferences.getUInt("WEATHER_ADDR", CLEAR);
+  derncoul = preferences.getString("derncoul", "#FFFFFF");
   //change_state("nw\n");
   WiFiManager wifiManager;
   wifiManager.setTimeout(240);
