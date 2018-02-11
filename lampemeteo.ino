@@ -132,7 +132,6 @@ void change_state(String choice) {
   //   delay(1);
   FastLED.show();
   //   delay(1);
-  vTaskDelay(20);
 }
 
 void Fire2012(CRGB leds[NUM_LEDS2]) {
@@ -534,14 +533,14 @@ void handleAdminSettings() {                                                    
     pass = server.arg("PASS");
     preferences.putString("username", username);
     preferences.putString("pass", pass);
-    msg = "Save Successfull!";
+    msg = "Sauvegargde r&eacute;ussie !";
   }
   String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />";
   content += "<meta name='viewport' content='width=device-width; initial-scale=1.0; maximum-scale=1.0;'>";
-  content += "<html><body style='text-align:center'><form action='' method='POST'> Admin Settings:<br>";
-  content += "User name:<input type='text' name='USERNAME' value='" + username + "' maxlength='20'><br>";
-  content += "Password:<input type='password' name='PASS' value='" + pass + "' maxlength='20'><br><br>";
-  content += "<input type='submit' name='SUBMIT' value='Save'></form><br>";
+  content += "<html><body style='text-align:center'><form action='' method='POST'> Changer le mot de passe:<br>";
+  content += "Nom d'utilisateur:<input type='text' name='USERNAME' value='" + username + "' maxlength='20'><br>";
+  content += "Mot de passe:<input type='password' name='PASS' value='" + pass + "' maxlength='20'><br><br>";
+  content += "<input type='submit' name='SUBMIT' value='Sauvegarder'></form><br>";
   content += msg + "<br><br>";
   content += "<a href='/'>Back</a></body></html>";
   server.send(200, "text/html", content);
@@ -559,26 +558,26 @@ void handleWeatherSettings() {                                                  
     preferences.putString("latitude", latitude);
     preferences.putString("longitude", longitude);
     preferences.putString("forecast", forecast);
-    msg = "Save Successfull!";
+    msg = "Sauvegargde r&eacute;ussie !";
     request_weather();
   }
   String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />";
   content += "<meta name='viewport' content='width=device-width; initial-scale=1.0; maximum-scale=1.0;'>";
-  content += "<html><body style='text-align:center'><form action='' method='POST'> Weather Settings <br>";
+  content += "<html><body style='text-align:center'><form action='' method='POST'> R&eacute;glages M&eacute;t&eacute;o <br>";
   content += "Latitude:    <input type='text' id='Lat' name='Latitude' value='" + latitude + "' maxlength='11'><br>";
   content += "Longitude:<input type='text' id='Lng' name='Longitude' value='" + longitude + "' maxlength='11'><br>";
-  content += "Forecast:  <select name=\"Forecast\">";
-  content += "<option " + String((forecast == "0") ? "selected " : "") + "value=\"0\">Now</option>";
-  content += "<option " + String((forecast == "6") ? "selected " : "") + "value=\"6\">+6  hours</option>";
-  content += "<option " + String((forecast == "12") ? "selected " : "") + "value=\"12\">+12 hours</option>";
-  content += "<option " + String((forecast == "18") ? "selected " : "") + "value=\"18\">+18 hours</option>";
-  content += "<option " + String((forecast == "24") ? "selected " : "") + "value=\"24\">+24 hours</option>";
-  content += "<option " + String((forecast == "48") ? "selected " : "") + "value=\"48\">+2  days</option>";
-  content += "<option " + String((forecast == "72") ? "selected " : "") + "value=\"72\">+3  days</option>";
-  content += "<option " + String((forecast == "96") ? "selected " : "") + "value=\"96\">+4  days</option>";
+  content += "Pr&eacute;visions:  <select name=\"Forecast\">";
+  content += "<option " + String((forecast == "0") ? "selected " : "") + "value=\"0\">Maintenant</option>";
+  content += "<option " + String((forecast == "6") ? "selected " : "") + "value=\"6\">+6 heures</option>";
+  content += "<option " + String((forecast == "12") ? "selected " : "") + "value=\"12\">+12 heures</option>";
+  content += "<option " + String((forecast == "18") ? "selected " : "") + "value=\"18\">+18 heures</option>";
+  content += "<option " + String((forecast == "24") ? "selected " : "") + "value=\"24\">+24 heures</option>";
+  content += "<option " + String((forecast == "48") ? "selected " : "") + "value=\"48\">+2 jours</option>";
+  content += "<option " + String((forecast == "72") ? "selected " : "") + "value=\"72\">+3 jours</option>";
+  content += "<option " + String((forecast == "96") ? "selected " : "") + "value=\"96\">+4 jours</option>";
   content += "</select>";
-  content += "<br><br><input type='submit' name='SUBMIT' value='Save'></form>";
-  content += "<a href='/'>Back</a><br>";
+  content += "<br><br><input type='submit' name='SUBMIT' value='Sauvegarder'></form>";
+  content += "<a href='/'>Retour</a><br>";
   content += msg + "<br><br>";
   content += "<div id=\"googleMap\" style=\"width:100%;height:60%;text-align:center\"></div>";
   content += "<script> function myMap() {";
@@ -604,9 +603,9 @@ void handleRoot() {                                                             
       color.r = number >> 16;
       color.g = number >> 8 & 0xFF;
       color.b = number & 0xFF;
-      vTaskDelay(20);
+      //vTaskDelay(20);
       preferences.putString("derncoul", derncoul);
-      vTaskDelay(20);
+      //vTaskDelay(20);
       if (color.r != rouge) {
         change_state("r\n");
       }
@@ -655,25 +654,28 @@ void handleRoot() {                                                             
     }
   }
   String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />\n";
+  content += "<meta charset=\"UTF-8\" />\n<title>Lampe Meteo</title>\n";
   content += "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>\n";
   content += "<html><body style='text-align:center;'><form method='POST' action=''>\n";
-  content += "<span style='font-size:30px'>Colors</span><br>\n";
-  content += "<input id=\"colorpad\" type=\"color\" name=\"COULEUR\" class=\"color\" value=\"" + derncoul + "\" style=\"height:50px; width:120px; margin:1px\" onchange=\"this.form.submit()\"";
+  content += "<span style='font-size:30px'>Couleur</span><br>\n";
+  content += "<input id=\"colorpad\" type=\"color\" name=\"COULEUR\" class=\"color\" value=\"" + derncoul + "\" style=\"height:50px; width:120px; margin:1px; opacity:";
+  content += (effect != NO_EFFECT) ? "0.5;\" ":"1.0;\" ";
+  content += "onchange=\"this.form.submit()\"";
   content += (effect != NO_EFFECT) ? " disabled>" : ">\n";
   content += "<br><br>\n";
-  content += "<span style='font-size:30px'>Effects</span><br>\n";
+  content += "<span style='font-size:30px'>Effets</span><br>\n";
   content += "<input type='Submit' name='Effect' value='Fire' style=\"height:50px; width:120px; margin:10px; font-size:0px; background-image:url('https://s3.amazonaws.com/spoonflower/public/design_thumbnails/0167/7306/rrFirePattern-01_shop_preview.png'); color:white; opacity:";
   content += (effect == FIRE) ? "1.0;\">" : "0.5;\">\n";
   content += "<input type='Submit' name='Effect' value='Weather' style=\"height:50px; width:120px; margin:10px; font-size:0px; background-image:url('http://images.all-free-download.com/images/graphiclarge/transparent_water_drops_design_background_vector_542481.jpg'); color:white; opacity:";
-  content += (effect == WEATHER) ? "1.0;\">" : "0.5;\"\n>";
+  content += (effect == WEATHER) ? "1.0;\">" : "0.5;\">\n";
   content += "<br><br>\n";
-  content += "<span style='font-size:30px'>Brightness<br>\n";
+  content += "<span style='font-size:30px'>Intensit&eacute;e<br>\n";
   content += "<input type='Submit' name='Brightness' value='+' style='height:50px; width:120px; margin:10px; font-size:30px;'><br>\n";
   content += brightness;
   content += "%<br></span><input type='Submit' name='Brightness' value='-' style='height:50px; width:120px; margin:10px; font-size:30px;'>\n";
   content += "</form><br>\n";
-  content += "<a href='/admin_settings'>Admin Settings</a><br>\n";
-  content += "<a href='/weather_settings'>Weather Settings</a><br><br>\n";
+  content += "<a href='/admin_settings'>Changer mot de passe</a><br>\n";
+  content += "<a href='/weather_settings'>R&eacute;glages m&eacute;t&eacute;o</a><br><br>\n";
   content += "</body></html>\n";
   server.send(200, "text/html", content);
 }
@@ -786,7 +788,7 @@ void loop1(void *pvParameters) {
       timerd = millis();
       request_weather();
     }
-    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait / yield time to other tasks
+    vTaskDelay( 24 / portTICK_PERIOD_MS ); // wait / yield time to other tasks
   }
 }
 
