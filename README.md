@@ -1,37 +1,34 @@
-## Welcome to GitHub Pages
+# Lampe Météo pour esp32
 
-You can use the [editor on GitHub](https://github.com/sansillusion/LampeMeteo/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Utilise un seul esp32 pour rouler 108 ws2812b disposée en 6 groupes de 18 au tour d'un exagone à l'intérieur de la lampe
+[Voir video](https://www.youtube.com/watch?v=d4T23pGf4tQ&ab_channel=SteveOlmstead).
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Configuration
 
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### Flash
+Vous devez obtenir une clef API pour openWeather et une pour google Maps,
+et les enregistrer dans le fichier .ino :
 
 ```markdown
-Syntax highlighted code block
+String openWeatherID = "YourKeyHere";
+String googleMapsID = "YourKeyHere";
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
 ```
+### Soudures
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+Vous devez connecter le circuit de signal des dels sur la pin 18 (n'oubliez pas une r/sistance entre 100 et 250).
+Assurez vous d'avoir une source de courrant de 5v d'environs 8amps.
 
-### Jekyll Themes
+### Démarage
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/sansillusion/LampeMeteo/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+- première fois:
 
-### Support or Contact
+1. Connectez-vous sur le wifi espxxxxx
+2. Utilisez le gestionnaire de connection (sur android) ou allez à la page [http://192.168.4.1](http://192.168.4.1)
+3. Choisisez "configure wifi"
+4. Entrez les informations de votre routeur wifi et cliquez "save"
+5. La connecte sur votre wifi
+6. Visitez [http://meteo.local](http://meteo.local) sur ordinateurs ou utilisez [Zentri Discovery](https://play.google.com/store/apps/details?id=discovery.ack.me.ackme_discovery&hl=en) sur Android
+7. Ayez du plaisir pendents des heures !
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+## Pour plus d'informations ou d'aide n'hésitez pas !
