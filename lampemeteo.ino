@@ -14,7 +14,7 @@
 #include <Preferences.h>
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
-String openWeatherID = "YourKeyHere";
+String openWeatherID = "YourKeyHer";
 String googleMapsID = "YourKeyHere";
 unsigned long timerd = 0;
 String username;
@@ -52,7 +52,7 @@ int vert = 0;
 int bleu = 0;
 int runshow = 0;
 int change = 1;
-
+int travaille = 0;
 // convert string 2 char*
 char* string2char(String command) {
   if (command.length() != 0) {
@@ -61,7 +61,10 @@ char* string2char(String command) {
   }
 }
 
+
 void change_state(String choice) {
+  travaille = 1;
+  delay(20);
   if (choice == "r\n") {
     rouge = color.r;
     preferences.putUInt("RED_ADDR", color.r);
@@ -133,6 +136,7 @@ void change_state(String choice) {
   }
   // exponential mapping
   runshow = 1;
+  travaille = 0;
 }
 static byte heat[NUM_LEDS];
 static byte heat2[NUM_LEDS];
@@ -191,36 +195,36 @@ void Fire2012(CRGB leds[NUM_LEDS2]) {
     CRGB color = HeatColor( heat[j]);
     leds[j] = color;
   }
-    for ( int j = 0; j < 18; j++) {
-      CRGB color = HeatColor( heat2[j]);
-      int multi = 1 * NUM_LEDS;
-      int fixed = j + multi;
-      leds[fixed] = color;
-    }
-    for ( int j = 0; j < 18; j++) {
-      CRGB color = HeatColor( heat3[j]);
-      int multi = 2 * NUM_LEDS;
-      int fixed = j + multi;
-      leds[fixed] = color;
-    }
-    for ( int j = 0; j < 18; j++) {
-      CRGB color = HeatColor( heat4[j]);
-      int multi = 3 * NUM_LEDS;
-      int fixed = j + multi;
-      leds[fixed] = color;
-    }
-    for ( int j = 0; j < 18; j++) {
-      CRGB color = HeatColor( heat5[j]);
-      int multi = 4 * NUM_LEDS;
-      int fixed = j + multi;
-      leds[fixed] = color;
-    }
-    for ( int j = 0; j < 18; j++) {
-      CRGB color = HeatColor( heat6[j]);
-      int multi = 5 * NUM_LEDS;
-      int fixed = j + multi;
-      leds[fixed] = color;
-    }
+  for ( int j = 0; j < 18; j++) {
+    CRGB color = HeatColor( heat2[j]);
+    int multi = 1 * NUM_LEDS;
+    int fixed = j + multi;
+    leds[fixed] = color;
+  }
+  for ( int j = 0; j < 18; j++) {
+    CRGB color = HeatColor( heat3[j]);
+    int multi = 2 * NUM_LEDS;
+    int fixed = j + multi;
+    leds[fixed] = color;
+  }
+  for ( int j = 0; j < 18; j++) {
+    CRGB color = HeatColor( heat4[j]);
+    int multi = 3 * NUM_LEDS;
+    int fixed = j + multi;
+    leds[fixed] = color;
+  }
+  for ( int j = 0; j < 18; j++) {
+    CRGB color = HeatColor( heat5[j]);
+    int multi = 4 * NUM_LEDS;
+    int fixed = j + multi;
+    leds[fixed] = color;
+  }
+  for ( int j = 0; j < 18; j++) {
+    CRGB color = HeatColor( heat6[j]);
+    int multi = 5 * NUM_LEDS;
+    int fixed = j + multi;
+    leds[fixed] = color;
+  }
 }
 
 void weather_effect(CRGB leds[NUM_LEDS2], int maperiod0, int maperiod1, int maperiod2, int maperiod3, int maperiod4, int maperiod5) {
@@ -593,8 +597,11 @@ void handleAdminSettings() {                                                    
   if (server.hasArg("USERNAME") && server.hasArg("PASS")) {
     username = server.arg("USERNAME");
     pass = server.arg("PASS");
+    travaille = 1;
+    delay(20);
     preferences.putString("username", username);
     preferences.putString("pass", pass);
+    travaille = 0;
     msg = "Sauvegargde r&eacute;ussie !";
   }
   String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />";
@@ -617,9 +624,12 @@ void handleWeatherSettings() {                                                  
     latitude = server.arg("Latitude");
     longitude = server.arg("Longitude");
     forecast = server.arg("Forecast");
+    travaille = 1;
+    delay(20);
     preferences.putString("latitude", latitude);
     preferences.putString("longitude", longitude);
     preferences.putString("forecast", forecast);
+    travaille = 0;
     msg = "Sauvegargde r&eacute;ussie !";
     request_weather();
   }
@@ -666,7 +676,12 @@ void handleRoot() {                                                             
       color.g = number >> 8 & 0xFF;
       color.b = number & 0xFF;
       //vTaskDelay(20);
+      Serial.println("putString couleur");
+      travaille = 1;
+      delay(20);
       preferences.putString("derncoul", derncoul);
+      travaille = 0;
+      Serial.println("putString couleur fait");
       //vTaskDelay(20);
       if (color.r != rouge) {
         change_state("r\n");
@@ -677,31 +692,42 @@ void handleRoot() {                                                             
       if (color.b != bleu) {
         change_state("b\n");
       }
+      Serial.println("change couleur fini");
     }
   }
 
   if (server.hasArg("Effect")) {
     if (server.arg("Effect") == "Fire") {
       if (effect != FIRE) {
+        Serial.println("change fire");
         change_state("f\n");
+        Serial.println("change fire fini");
       }
       else {
+        Serial.println("change no fire");
         change_state("nf\n");
+        Serial.println("change no fire");
       }
     }
     if (server.arg("Effect") == "Weather") {
       if (effect != WEATHER) {
+        Serial.println("change weather");
         change_state("w\n");
+        Serial.println("change weather fini");
       }
       else {
+        Serial.println("change no weather");
         change_state("nw\n");
+        Serial.println("change no weather fini");
       }
     }
   }
   if (server.hasArg("Brightness")) {
     if (server.arg("Brightness") == "+") {
       if (brightness <= 75) {
+        Serial.println("change bright up");
         change_state("bu\n");
+        Serial.println("change bright up fini");
       }
       else {
         brightness = 100;
@@ -709,7 +735,9 @@ void handleRoot() {                                                             
     }
     else if (server.arg("Brightness") == "-") {
       if (brightness >= 25) {
+        Serial.println("change bright down");
         change_state("bd\n");
+        Serial.println("change bright down fini");
       } else {
         brightness = 0;
       }
@@ -860,20 +888,20 @@ void loop1(void *pvParameters) {
       timerd = millis();
       request_weather();
     }
-    vTaskDelay( 48 ); // wait / yield time to other tasks
+    vTaskDelay( 64 ); // wait / yield time to other tasks
   }
 }
 
 
 void setup() {
-  //Serial.begin(115200);
+  Serial.begin(115200);
   delay(300); // sanity delay
-  FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2);
   preferences.begin("meteo", false);
   username = preferences.getString("username", "admin");
   pass = preferences.getString("pass", "admin");
-  latitude = preferences.getString("latitude", "-75.62");
-  longitude = preferences.getString("longitude", "50");
+  latitude = preferences.getString("latitude", "45.49");
+  longitude = preferences.getString("longitude", "-75.62");
   forecast = preferences.getString("forecast", "24");
   brightness = preferences.getUInt("BRIGHT_ADDR", 50);
   color.r = preferences.getUInt("RED_ADDR", 255);
@@ -909,66 +937,67 @@ void setup() {
   request_weather();
   //xTaskCreatePinnedToCore(loop1, "loop1", 2048, NULL, 2, NULL, 0); // on dirait que les sensors aiment pas avoir une priorite de 1 alors 2 semble ok
   xTaskCreate(loop1, "loop1", 2048, NULL, 1, NULL);
+  delay(200);
 }
 
 void loop() {
-  if (effect == FIRE) {
-    Fire2012(leds1);
-    FastLED.delay(random(900, 1900) / FRAMES_PER_SECOND);
-    change = 1;
-  }
-  if (effect == WEATHER) {
-    int period0;
-    int period1;
-    int period2;
-    int period3;
-    int period4;
-    int period5;
-    if (weather == CLEAR || weather == CLOUDS) {
-      if (weather == CLEAR) {
-        period0 = beatsin16(3, 0, 145);
-        period1 = beatsin16(11, 0, 145);
-        period2 = beatsin16(17, 0, 145);
-        period3 = beatsin16(23, 0, 145);
-        period4 = beatsin16(31, 0, 145);
-        period5 = beatsin16(49, 0, 145);
-      }
-      else if (weather == CLOUDS) {
-        period0 = beatsin16(3, 0, 255);
-        period1 = beatsin16(11, 0, 255);
-        period2 = beatsin16(17, 0, 255);
-        period3 = beatsin16(23, 0, 255);
-        period4 = beatsin16(31, 0, 255);
-        period5 = beatsin16(49, 0, 255);
-      }
-    }
-    weather_effect(leds1, period0, period1, period2, period3, period4, period5);
-    change = 1;
-    if (weather == RAIN || weather == THUNDERSTORM) {
-      raining();
-      if (weather == THUNDERSTORM) {
-        int randomThunder = random8(100);
-        if (randomThunder > 98) {
-          thunder();
-          change = 1;
-        }
-      }
-      FastLED.delay(1000 / 60);
-    }
-    else if (weather == SNOW) {
-      snowing();
+  while (travaille == 0) {
+    if (effect == FIRE) {
+      Fire2012(leds1);
+      FastLED.delay(random(900, 1900) / FRAMES_PER_SECOND);
       change = 1;
     }
+    if (effect == WEATHER) {
+      int period0;
+      int period1;
+      int period2;
+      int period3;
+      int period4;
+      int period5;
+      if (weather == CLEAR || weather == CLOUDS) {
+        if (weather == CLEAR) {
+          period0 = beatsin16(3, 0, 145);
+          period1 = beatsin16(11, 0, 145);
+          period2 = beatsin16(17, 0, 145);
+          period3 = beatsin16(23, 0, 145);
+          period4 = beatsin16(31, 0, 145);
+          period5 = beatsin16(49, 0, 145);
+        }
+        else if (weather == CLOUDS) {
+          period0 = beatsin16(3, 0, 255);
+          period1 = beatsin16(11, 0, 255);
+          period2 = beatsin16(17, 0, 255);
+          period3 = beatsin16(23, 0, 255);
+          period4 = beatsin16(31, 0, 255);
+          period5 = beatsin16(49, 0, 255);
+        }
+      }
+      weather_effect(leds1, period0, period1, period2, period3, period4, period5);
+      change = 1;
+      if (weather == RAIN || weather == THUNDERSTORM) {
+        raining();
+        if (weather == THUNDERSTORM) {
+          int randomThunder = random8(100);
+          if (randomThunder > 98) {
+            thunder();
+            change = 1;
+          }
+        }
+        FastLED.delay(1000 / 60);
+      }
+      else if (weather == SNOW) {
+        snowing();
+        change = 1;
+      }
+    }
+    if (runshow != 0) {
+      runshow = 0;
+      FastLED.setBrightness(map(brightness, 0, 100, 0, 255));
+    }
+    if (change != 0) {
+      change = 0;
+      FastLED.show();
+    }
+    FastLED.delay(1000 / FRAMES_PER_SECOND);
   }
-  if (runshow != 0) {
-    runshow = 0;
-    //int expBrightness = brightness * brightness;
-    FastLED.setBrightness(map(brightness, 0, 100, 0, 255));
-    //delay(20);
-  }
-  if (change != 0) {
-    change = 0;
-    FastLED.show();
-  }
-  FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
