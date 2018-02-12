@@ -1,6 +1,8 @@
 // Wifi Lamp Project
 // Steve Olmstead 10/02/2018
 // Based on work from Vagtsal, 14/7/2017
+#define FASTLED_INTERRUPT_RETRY_COUNT 0
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <DNSServer.h>
@@ -20,16 +22,17 @@ String pass;
 String latitude;
 String longitude;
 String forecast;
+String meteo;
 String msg;
 String derncoul = "";
 #define LED_PIN1     18
-#define COLOR_ORDER RGB
+#define COLOR_ORDER GRB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    18
 #define NUM_LEDS2    108
 #define COOLING  55
 #define SPARKING 120
-#define FRAMES_PER_SECOND 60
+#define FRAMES_PER_SECOND 120
 CRGB leds1[NUM_LEDS2];
 CRGB color;
 int effect;
@@ -47,6 +50,8 @@ WebServer server(80);
 int rouge = 0;
 int vert = 0;
 int bleu = 0;
+int runshow = 0;
+int change = 1;
 
 // convert string 2 char*
 char* string2char(String command) {
@@ -127,38 +132,95 @@ void change_state(String choice) {
     }
   }
   // exponential mapping
-  int expBrightness = brightness * brightness;
-  FastLED.setBrightness(map(expBrightness, 0, 10000, 0, 143));
-  //   delay(1);
-  FastLED.show();
-  //   delay(1);
+  runshow = 1;
 }
+static byte heat[NUM_LEDS];
+static byte heat2[NUM_LEDS];
+static byte heat3[NUM_LEDS];
+static byte heat4[NUM_LEDS];
+static byte heat5[NUM_LEDS];
+static byte heat6[NUM_LEDS];
 
 void Fire2012(CRGB leds[NUM_LEDS2]) {
-  for (int imagod = 0; imagod < 6; imagod++) {
-    // Array of temperature readings at each simulation cell
-    static byte heat[NUM_LEDS];
-    // Step 1.  Cool down every cell a little
-    for ( int i = 0; i < NUM_LEDS; i++) {
-      heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
-    }
-    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-    for ( int k = NUM_LEDS - 1; k >= 2; k--) {
-      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
-    }
-    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-    if ( random8() < SPARKING ) {
-      int y = random8(7);
-      heat[y] = qadd8( heat[y], random8(160, 255) );
-    }
-    // Step 4.  Map from heat cells to LED colors
-    for ( int j = 0; j < NUM_LEDS; j++) {
-      int multi = imagod * NUM_LEDS;
-      int fixed = j + imagod;
-      CRGB color = HeatColor( heat[fixed]);
+  // Array of temperature readings at each simulation cell
+  // Step 1.  Cool down every cell a little
+  for ( int i = 0; i < NUM_LEDS; i++) {
+    heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    heat2[i] = qsub8( heat2[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    heat3[i] = qsub8( heat3[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    heat4[i] = qsub8( heat4[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    heat5[i] = qsub8( heat5[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    heat6[i] = qsub8( heat6[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+  }
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for ( int k = NUM_LEDS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+    heat2[k] = (heat2[k - 1] + heat2[k - 2] + heat2[k - 2] ) / 3;
+    heat3[k] = (heat3[k - 1] + heat3[k - 2] + heat3[k - 2] ) / 3;
+    heat4[k] = (heat4[k - 1] + heat4[k - 2] + heat4[k - 2] ) / 3;
+    heat5[k] = (heat5[k - 1] + heat5[k - 2] + heat5[k - 2] ) / 3;
+    heat6[k] = (heat6[k - 1] + heat6[k - 2] + heat6[k - 2] ) / 3;
+  }
+  // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat[y] = qadd8( heat[y], random8(160, 255) );
+  }
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat2[y] = qadd8( heat2[y], random8(160, 255) );
+  }
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat3[y] = qadd8( heat3[y], random8(160, 255) );
+  }
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat4[y] = qadd8( heat4[y], random8(160, 255) );
+  }
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat5[y] = qadd8( heat5[y], random8(160, 255) );
+  }
+  if ( random8() < SPARKING ) {
+    int y = random8(7);
+    heat6[y] = qadd8( heat6[y], random8(160, 255) );
+  }
+  // Step 4.  Map from heat cells to LED colors
+  for ( int j = 0; j < 18; j++) {
+    CRGB color = HeatColor( heat[j]);
+    leds[j] = color;
+  }
+    for ( int j = 0; j < 18; j++) {
+      CRGB color = HeatColor( heat2[j]);
+      int multi = 1 * NUM_LEDS;
+      int fixed = j + multi;
       leds[fixed] = color;
     }
-  }
+    for ( int j = 0; j < 18; j++) {
+      CRGB color = HeatColor( heat3[j]);
+      int multi = 2 * NUM_LEDS;
+      int fixed = j + multi;
+      leds[fixed] = color;
+    }
+    for ( int j = 0; j < 18; j++) {
+      CRGB color = HeatColor( heat4[j]);
+      int multi = 3 * NUM_LEDS;
+      int fixed = j + multi;
+      leds[fixed] = color;
+    }
+    for ( int j = 0; j < 18; j++) {
+      CRGB color = HeatColor( heat5[j]);
+      int multi = 4 * NUM_LEDS;
+      int fixed = j + multi;
+      leds[fixed] = color;
+    }
+    for ( int j = 0; j < 18; j++) {
+      CRGB color = HeatColor( heat6[j]);
+      int multi = 5 * NUM_LEDS;
+      int fixed = j + multi;
+      leds[fixed] = color;
+    }
 }
 
 void weather_effect(CRGB leds[NUM_LEDS2], int maperiod0, int maperiod1, int maperiod2, int maperiod3, int maperiod4, int maperiod5) {
@@ -216,7 +278,7 @@ void weather_effect(CRGB leds[NUM_LEDS2], int maperiod0, int maperiod1, int mape
         break;
     }
     for ( int i = 0; i < NUM_LEDS; i++) {
-      int fixed = i * multi;
+      int fixed = i + multi;
       switch (i) {
         case 0:
         case 5:
@@ -659,7 +721,7 @@ void handleRoot() {                                                             
   content += "<html><body style='text-align:center;'><form method='POST' action=''>\n";
   content += "<span style='font-size:30px'>Couleur</span><br>\n";
   content += "<input id=\"colorpad\" type=\"color\" name=\"COULEUR\" class=\"color\" value=\"" + derncoul + "\" style=\"height:50px; width:120px; margin:1px; opacity:";
-  content += (effect != NO_EFFECT) ? "0.5;\" ":"1.0;\" ";
+  content += (effect != NO_EFFECT) ? "0.5;\" " : "1.0;\" ";
   content += "onchange=\"this.form.submit()\"";
   content += (effect != NO_EFFECT) ? " disabled>" : ">\n";
   content += "<br><br>\n";
@@ -668,7 +730,10 @@ void handleRoot() {                                                             
   content += (effect == FIRE) ? "1.0;\">" : "0.5;\">\n";
   content += "<input type='Submit' name='Effect' value='Weather' style=\"height:50px; width:120px; margin:10px; font-size:0px; background-image:url('http://images.all-free-download.com/images/graphiclarge/transparent_water_drops_design_background_vector_542481.jpg'); color:white; opacity:";
   content += (effect == WEATHER) ? "1.0;\">" : "0.5;\">\n";
-  content += "<br><br>\n";
+  content += "<br>";
+  content += "M&eacute;t&eacute;o : ";
+  content += meteo;
+  content += "<br>\n";
   content += "<span style='font-size:30px'>Intensit&eacute;e<br>\n";
   content += "<input type='Submit' name='Brightness' value='+' style='height:50px; width:120px; margin:10px; font-size:30px;'><br>\n";
   content += brightness;
@@ -698,7 +763,7 @@ void handleNotFound() {                             // NOT FOUND PAGE
 void request_weather() {
   int previousWeather = weather;
   int noOfBrackets;
-  Serial.println("depart");
+  //Serial.println("depart");
   HTTPClient http;
   String url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude + "&APPID=" + openWeatherID;
   http.begin(url);
@@ -733,7 +798,8 @@ void request_weather() {
   //Serial.println(payload);
   int pos = payload.indexOf('[');
   if (pos == -1) {
-    Serial.println("error");
+    meteo = "erreur !";
+    //Serial.println("error");
     return;
   }
   for (int i = 0; i < noOfBrackets; i++) {
@@ -745,40 +811,46 @@ void request_weather() {
   String weatherString =  payload.substring(pos + 1, payload.indexOf("\"", pos + 2));
   if (weatherString == "Clear") {
     weather = CLEAR;
+    meteo = "D&eacute;gag&eacute;";
     if (previousWeather != weather) {
       change_state("ws\n");
     }
   }
   else if (weatherString == "Clouds") {
     weather = CLOUDS;
+    meteo = "Nuageux";
     if (previousWeather != weather) {
       change_state("wc\n");
     }
   }
   else if (weatherString == "Rain" || weatherString == "Drizzle") {
     weather = RAIN;
+    meteo = "Pluie";
     if (previousWeather != weather) {
       change_state("wr\n");
     }
   }
   else if (weatherString == "Thunderstorm") {
     weather = THUNDERSTORM;
+    meteo = "Orages";
     if (previousWeather != weather) {
       change_state("wt\n");
     }
   }
   else if (weatherString == "Snow") {
     weather = SNOW;
+    meteo = "Neige";
     if (previousWeather != weather) {
       change_state("wx\n");
     }
   }
   if (previousWeather != weather) {
-    Serial.println("different");
+    //Serial.println("different");
   }
   http.end();
-  Serial.println("fini");
+  //Serial.println("fini");
 }
+
 
 void loop1(void *pvParameters) {
   while (1) {
@@ -788,18 +860,19 @@ void loop1(void *pvParameters) {
       timerd = millis();
       request_weather();
     }
-    vTaskDelay( 24 / portTICK_PERIOD_MS ); // wait / yield time to other tasks
+    vTaskDelay( 48 ); // wait / yield time to other tasks
   }
 }
 
+
 void setup() {
-  Serial.begin(115200);
-  delay(1000); // sanity delay
+  //Serial.begin(115200);
+  delay(300); // sanity delay
   FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2).setCorrection( TypicalLEDStrip );
   preferences.begin("meteo", false);
   username = preferences.getString("username", "admin");
   pass = preferences.getString("pass", "admin");
-  latitude = preferences.getString("latitude", "50");
+  latitude = preferences.getString("latitude", "-75.62");
   longitude = preferences.getString("longitude", "50");
   forecast = preferences.getString("forecast", "24");
   brightness = preferences.getUInt("BRIGHT_ADDR", 50);
@@ -812,7 +885,7 @@ void setup() {
   effect = preferences.getUInt("EFFECT_ADDR", NO_EFFECT);
   weather = preferences.getUInt("WEATHER_ADDR", CLEAR);
   derncoul = preferences.getString("derncoul", "#FFFFFF");
-  //change_state("nw\n");
+  change_state("setup");
   WiFiManager wifiManager;
   wifiManager.setTimeout(240);
   WiFi.disconnect(); // pour prevenir de bugs de power et autres
@@ -834,12 +907,15 @@ void setup() {
   MDNS.addService("_http", "_tcp", 80);
   //Serial.print("Server parti");
   request_weather();
-  xTaskCreatePinnedToCore(loop1, "loop1", 4096, NULL, 2, NULL, 0);
+  //xTaskCreatePinnedToCore(loop1, "loop1", 2048, NULL, 2, NULL, 0); // on dirait que les sensors aiment pas avoir une priorite de 1 alors 2 semble ok
+  xTaskCreate(loop1, "loop1", 2048, NULL, 1, NULL);
 }
 
 void loop() {
   if (effect == FIRE) {
     Fire2012(leds1);
+    FastLED.delay(random(900, 1900) / FRAMES_PER_SECOND);
+    change = 1;
   }
   if (effect == WEATHER) {
     int period0;
@@ -867,23 +943,32 @@ void loop() {
       }
     }
     weather_effect(leds1, period0, period1, period2, period3, period4, period5);
+    change = 1;
     if (weather == RAIN || weather == THUNDERSTORM) {
       raining();
       if (weather == THUNDERSTORM) {
         int randomThunder = random8(100);
         if (randomThunder > 98) {
           thunder();
+          change = 1;
         }
       }
       FastLED.delay(1000 / 60);
     }
     else if (weather == SNOW) {
       snowing();
+      change = 1;
     }
   }
-  //delay(1);
-  FastLED.show();
-  //delay(1);
+  if (runshow != 0) {
+    runshow = 0;
+    //int expBrightness = brightness * brightness;
+    FastLED.setBrightness(map(brightness, 0, 100, 0, 255));
+    //delay(20);
+  }
+  if (change != 0) {
+    change = 0;
+    FastLED.show();
+  }
   FastLED.delay(1000 / FRAMES_PER_SECOND);
-  //  vTaskDelay( 1000 / FRAMES_PER_SECOND );
 }
