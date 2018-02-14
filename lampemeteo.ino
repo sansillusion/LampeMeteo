@@ -1,8 +1,8 @@
 // Wifi Lamp Project
 // Steve Olmstead 10/02/2018
 // Based on work from Vagtsal, 14/7/2017
-#define FASTLED_INTERRUPT_RETRY_COUNT 0
-#define FASTLED_ALLOW_INTERRUPTS 0
+//#define FASTLED_INTERRUPT_RETRY_COUNT 0
+//#define FASTLED_ALLOW_INTERRUPTS 0
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <DNSServer.h>
@@ -14,11 +14,9 @@
 #include <Preferences.h>
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
-String openWeatherID = "YourKeyHer";
-String googleMapsID = "YourKeyHere";
+String openWeatherID = "YourKeyHere";
+String googleMapsID = "YourKeyHer";
 unsigned long timerd = 0;
-String username;
-String pass;
 String latitude;
 String longitude;
 String forecast;
@@ -31,7 +29,7 @@ String derncoul = "";
 #define NUM_LEDS    18
 #define NUM_LEDS2    108
 #define COOLING  55
-#define SPARKING 120
+#define SPARKING 65
 #define FRAMES_PER_SECOND 120
 CRGB leds1[NUM_LEDS2];
 CRGB color;
@@ -61,10 +59,9 @@ char* string2char(String command) {
   }
 }
 
-
 void change_state(String choice) {
   travaille = 1;
-  delay(20);
+  vTaskDelay(50);
   if (choice == "r\n") {
     rouge = color.r;
     preferences.putUInt("RED_ADDR", color.r);
@@ -136,6 +133,7 @@ void change_state(String choice) {
   }
   // exponential mapping
   runshow = 1;
+  vTaskDelay(50);
   travaille = 0;
 }
 static byte heat[NUM_LEDS];
@@ -511,7 +509,9 @@ void snowing() {
     if (leds1[i] == CRGB(255, 255, 255)) {
       leds1[i] = CRGB(15, 15, 15);
       if (i != 0) {
-        leds1[i - 1] = CRGB(255, 255, 255);
+        int mathm = random(1, 100);
+        mathm = map(mathm, 1, 150, 1, 2);
+        leds1[i - mathm] = CRGB(255, 255, 255);
       }
     }
     else {
@@ -520,7 +520,10 @@ void snowing() {
     if (leds1[i + 18] == CRGB(255, 255, 255)) {
       leds1[i + 18] = CRGB(15, 15, 15);
       if (i != 0) {
-        leds1[i  + 17] = CRGB(255, 255, 255);
+        int mathm = random(1, 100);
+        mathm = map(mathm, 1, 150, 1, 2);
+        mathm = mathm + 16;
+        leds1[i  + mathm] = CRGB(255, 255, 255);
       }
     }
     else {
@@ -529,7 +532,10 @@ void snowing() {
     if (leds1[i + 36] == CRGB(255, 255, 255)) {
       leds1[i + 36] = CRGB(15, 15, 15);
       if (i != 0) {
-        leds1[i  + 35] = CRGB(255, 255, 255);
+        int mathm = random(1, 100);
+        mathm = map(mathm, 1, 130, 1, 2);
+        mathm = mathm + 34;
+        leds1[i  + mathm] = CRGB(255, 255, 255);
       }
     }
     else {
@@ -538,7 +544,10 @@ void snowing() {
     if (leds1[i + 54] == CRGB(255, 255, 255)) {
       leds1[i + 54] = CRGB(15, 15, 15);
       if (i != 0) {
-        leds1[i + 53] = CRGB(255, 255, 255);
+        int mathm = random(1, 100);
+        mathm = map(mathm, 1, 150, 1, 2);
+        mathm = mathm + 52;
+        leds1[i + mathm] = CRGB(255, 255, 255);
       }
     }
     else {
@@ -547,7 +556,10 @@ void snowing() {
     if (leds1[i + 72] == CRGB(255, 255, 255)) {
       leds1[i + 72] = CRGB(15, 15, 15);
       if (i != 0) {
-        leds1[i + 71] = CRGB(255, 255, 255);
+        int mathm = random(1, 100);
+        mathm = map(mathm, 1, 150, 1, 2);
+        mathm = mathm + 70;
+        leds1[i + mathm] = CRGB(255, 255, 255);
       }
     }
     else {
@@ -556,7 +568,10 @@ void snowing() {
     if (leds1[i + 90] == CRGB(255, 255, 255)) {
       leds1[i + 90] = CRGB(15, 15, 15);
       if (i != 0) {
-        leds1[i  + 89] = CRGB(255, 255, 255);
+        int mathm = random(1, 100);
+        mathm = map(mathm, 1, 140, 1, 2);
+        mathm = mathm + 88;
+        leds1[i  + mathm] = CRGB(255, 255, 255);
       }
     }
     else {
@@ -587,48 +602,20 @@ void snowing() {
         break;
     }
   }
-  FastLED.delay(300);
-}
-
-void handleAdminSettings() {                                                                // ADMIN SETTINGS PAGE
-  if (!server.authenticate(string2char(username), string2char(pass))) {
-    return server.requestAuthentication();
-  }
-  if (server.hasArg("USERNAME") && server.hasArg("PASS")) {
-    username = server.arg("USERNAME");
-    pass = server.arg("PASS");
-    travaille = 1;
-    delay(20);
-    preferences.putString("username", username);
-    preferences.putString("pass", pass);
-    travaille = 0;
-    msg = "Sauvegargde r&eacute;ussie !";
-  }
-  String content = "<meta http-equiv='content-type' content='text/html;charset=utf-8' />";
-  content += "<meta name='viewport' content='width=device-width; initial-scale=1.0; maximum-scale=1.0;'>";
-  content += "<html><body style='text-align:center'><form action='' method='POST'> Changer le mot de passe:<br>";
-  content += "Nom d'utilisateur:<input type='text' name='USERNAME' value='" + username + "' maxlength='20'><br>";
-  content += "Mot de passe:<input type='password' name='PASS' value='" + pass + "' maxlength='20'><br><br>";
-  content += "<input type='submit' name='SUBMIT' value='Sauvegarder'></form><br>";
-  content += msg + "<br><br>";
-  content += "<a href='/'>Back</a></body></html>";
-  server.send(200, "text/html", content);
-  msg = "";
+  FastLED.delay(random(160, 300));
 }
 
 void handleWeatherSettings() {                                                                // WEATHER SETTINGS PAGE
-  if (!server.authenticate(string2char(username), string2char(pass))) {
-    return server.requestAuthentication();
-  }
   if (server.hasArg("Latitude") && server.hasArg("Longitude") && server.hasArg("Forecast")) {
     latitude = server.arg("Latitude");
     longitude = server.arg("Longitude");
     forecast = server.arg("Forecast");
     travaille = 1;
-    delay(20);
+    vTaskDelay(50);
     preferences.putString("latitude", latitude);
     preferences.putString("longitude", longitude);
     preferences.putString("forecast", forecast);
+    vTaskDelay(50);
     travaille = 0;
     msg = "Sauvegargde r&eacute;ussie !";
     request_weather();
@@ -664,9 +651,6 @@ void handleWeatherSettings() {                                                  
 }
 
 void handleRoot() {                                                                               // MAIN PAGE
-  //  if (!server.authenticate(username, string2char(pass))) {
-  //    return server.requestAuthentication();
-  //  }
   if (server.hasArg("COULEUR")) {
     String testteu = server.arg("COULEUR");
     if (testteu != 0) {
@@ -676,58 +660,47 @@ void handleRoot() {                                                             
       color.g = number >> 8 & 0xFF;
       color.b = number & 0xFF;
       //vTaskDelay(20);
-      Serial.println("putString couleur");
       travaille = 1;
-      delay(20);
+      vTaskDelay(50);
       preferences.putString("derncoul", derncoul);
+      vTaskDelay(50);
       travaille = 0;
-      Serial.println("putString couleur fait");
-      //vTaskDelay(20);
       if (color.r != rouge) {
+        change_state("nw\n");
         change_state("r\n");
       }
       if (color.g != vert) {
+        change_state("nw\n");
         change_state("g\n");
       }
       if (color.b != bleu) {
+        change_state("nw\n");
         change_state("b\n");
       }
-      Serial.println("change couleur fini");
     }
   }
-
   if (server.hasArg("Effect")) {
     if (server.arg("Effect") == "Fire") {
       if (effect != FIRE) {
-        Serial.println("change fire");
         change_state("f\n");
-        Serial.println("change fire fini");
       }
       else {
-        Serial.println("change no fire");
         change_state("nf\n");
-        Serial.println("change no fire");
       }
     }
     if (server.arg("Effect") == "Weather") {
       if (effect != WEATHER) {
-        Serial.println("change weather");
         change_state("w\n");
-        Serial.println("change weather fini");
       }
       else {
-        Serial.println("change no weather");
         change_state("nw\n");
-        Serial.println("change no weather fini");
       }
     }
   }
   if (server.hasArg("Brightness")) {
     if (server.arg("Brightness") == "+") {
       if (brightness <= 75) {
-        Serial.println("change bright up");
         change_state("bu\n");
-        Serial.println("change bright up fini");
       }
       else {
         brightness = 100;
@@ -735,9 +708,7 @@ void handleRoot() {                                                             
     }
     else if (server.arg("Brightness") == "-") {
       if (brightness >= 25) {
-        Serial.println("change bright down");
         change_state("bd\n");
-        Serial.println("change bright down fini");
       } else {
         brightness = 0;
       }
@@ -750,8 +721,7 @@ void handleRoot() {                                                             
   content += "<span style='font-size:30px'>Couleur</span><br>\n";
   content += "<input id=\"colorpad\" type=\"color\" name=\"COULEUR\" class=\"color\" value=\"" + derncoul + "\" style=\"height:50px; width:120px; margin:1px; opacity:";
   content += (effect != NO_EFFECT) ? "0.5;\" " : "1.0;\" ";
-  content += "onchange=\"this.form.submit()\"";
-  content += (effect != NO_EFFECT) ? " disabled>" : ">\n";
+  content += "onchange=\"this.form.submit()\"" ">\n";
   content += "<br><br>\n";
   content += "<span style='font-size:30px'>Effets</span><br>\n";
   content += "<input type='Submit' name='Effect' value='Fire' style=\"height:50px; width:120px; margin:10px; font-size:0px; background-image:url('https://s3.amazonaws.com/spoonflower/public/design_thumbnails/0167/7306/rrFirePattern-01_shop_preview.png'); color:white; opacity:";
@@ -767,7 +737,6 @@ void handleRoot() {                                                             
   content += brightness;
   content += "%<br></span><input type='Submit' name='Brightness' value='-' style='height:50px; width:120px; margin:10px; font-size:30px;'>\n";
   content += "</form><br>\n";
-  content += "<a href='/admin_settings'>Changer mot de passe</a><br>\n";
   content += "<a href='/weather_settings'>R&eacute;glages m&eacute;t&eacute;o</a><br><br>\n";
   content += "</body></html>\n";
   server.send(200, "text/html", content);
@@ -791,12 +760,14 @@ void handleNotFound() {                             // NOT FOUND PAGE
 void request_weather() {
   int previousWeather = weather;
   int noOfBrackets;
-  //Serial.println("depart");
   HTTPClient http;
   String url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude + "&APPID=" + openWeatherID;
+  travaille = 1;
+  vTaskDelay(50);
   http.begin(url);
   http.GET();
-
+  vTaskDelay(50);
+  travaille = 0;
   if (forecast == "0") {
     noOfBrackets = 1;
   }
@@ -823,11 +794,9 @@ void request_weather() {
   }
   // parse json (forecast, 24h later)
   String payload = http.getString();
-  //Serial.println(payload);
   int pos = payload.indexOf('[');
   if (pos == -1) {
     meteo = "erreur !";
-    //Serial.println("error");
     return;
   }
   for (int i = 0; i < noOfBrackets; i++) {
@@ -872,13 +841,8 @@ void request_weather() {
       change_state("wx\n");
     }
   }
-  if (previousWeather != weather) {
-    //Serial.println("different");
-  }
   http.end();
-  //Serial.println("fini");
 }
-
 
 void loop1(void *pvParameters) {
   while (1) {
@@ -888,18 +852,15 @@ void loop1(void *pvParameters) {
       timerd = millis();
       request_weather();
     }
-    vTaskDelay( 64 ); // wait / yield time to other tasks
+    vTaskDelay( 128 ); // wait / yield time to other tasks
   }
 }
 
-
 void setup() {
-  Serial.begin(115200);
+  //Serial.begin(115200);
   delay(300); // sanity delay
   FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2);
   preferences.begin("meteo", false);
-  username = preferences.getString("username", "admin");
-  pass = preferences.getString("pass", "admin");
   latitude = preferences.getString("latitude", "45.49");
   longitude = preferences.getString("longitude", "-75.62");
   forecast = preferences.getString("forecast", "24");
@@ -926,17 +887,11 @@ void setup() {
   MDNS.begin("meteo");
   server.on("/", handleRoot);
   server.on("/weather_settings", handleWeatherSettings);
-  server.on("/admin_settings", handleAdminSettings);
   server.onNotFound(handleNotFound);
-  const char * headerkeys[] = {"User-Agent", "Referer"} ;//peut ajouter autres si besoin eg {"User-Agent", "Cookie"}
-  size_t headerkeyssize = sizeof(headerkeys) / sizeof(char*);
-  server.collectHeaders(headerkeys, headerkeyssize );
   server.begin();
   MDNS.addService("_http", "_tcp", 80);
-  //Serial.print("Server parti");
   request_weather();
-  //xTaskCreatePinnedToCore(loop1, "loop1", 2048, NULL, 2, NULL, 0); // on dirait que les sensors aiment pas avoir une priorite de 1 alors 2 semble ok
-  xTaskCreate(loop1, "loop1", 2048, NULL, 1, NULL);
+  xTaskCreate(loop1, "loop1", 4056, NULL, 1, NULL);
   delay(200);
 }
 
@@ -944,7 +899,7 @@ void loop() {
   while (travaille == 0) {
     if (effect == FIRE) {
       Fire2012(leds1);
-      FastLED.delay(random(900, 1900) / FRAMES_PER_SECOND);
+      FastLED.delay(random(900, 3000) / FRAMES_PER_SECOND);
       change = 1;
     }
     if (effect == WEATHER) {
