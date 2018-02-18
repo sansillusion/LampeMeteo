@@ -896,7 +896,7 @@ void setup() {
   server.begin();
   MDNS.addService("_http", "_tcp", 80);
   request_weather();
-  xTaskCreate(loop1, "loop1", 2048, NULL, 1, NULL);
+  xTaskCreate(loop1, "loop1", 8192, NULL, 1, NULL);
   delay(200);
 }
 
