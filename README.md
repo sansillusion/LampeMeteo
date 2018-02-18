@@ -23,11 +23,11 @@ Assurez vous d'avoir une source de courrant de 5v d'environs 8amps.
 
 - première fois:
 
-1. Connectez-vous sur le wifi espxxxxx
+1. Connectez-vous sur le wifi "meteo"
 2. Utilisez le gestionnaire de connection (sur android) ou allez à la page [http://192.168.4.1](http://192.168.4.1)
 3. Choisisez "configure wifi"
 4. Entrez les informations de votre routeur wifi et cliquez "save"
-5. La connecte sur votre wifi
+5. La lampe se connecte sur votre wifi
 6. Visitez [http://meteo.local](http://meteo.local) sur ordinateurs ou utilisez [Zentri Discovery](https://play.google.com/store/apps/details?id=discovery.ack.me.ackme_discovery&hl=en) sur Android
 7. Ayez du plaisir pendents des heures !
 
