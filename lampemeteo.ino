@@ -15,7 +15,7 @@
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
 String openWeatherID = "YourKeyHere";
-String googleMapsID = "YourKeyHer";
+String googleMapsID = "YourKeyHere";
 unsigned long timerd = 0;
 String latitude;
 String longitude;
@@ -51,6 +51,7 @@ int bleu = 0;
 int runshow = 0;
 int change = 1;
 int travaille = 0;
+
 // convert string 2 char*
 char* string2char(String command) {
   if (command.length() != 0) {
@@ -136,6 +137,7 @@ void change_state(String choice) {
   vTaskDelay(50);
   travaille = 0;
 }
+
 static byte heat[NUM_LEDS];
 static byte heat2[NUM_LEDS];
 static byte heat3[NUM_LEDS];
@@ -651,6 +653,9 @@ void handleWeatherSettings() {                                                  
 }
 
 void handleRoot() {                                                                               // MAIN PAGE
+  //  if (!server.authenticate(username, string2char(pass))) {
+  //    return server.requestAuthentication();
+  //  }
   if (server.hasArg("COULEUR")) {
     String testteu = server.arg("COULEUR");
     if (testteu != 0) {
@@ -859,27 +864,27 @@ void loop1(void *pvParameters) {
 void setup() {
   //Serial.begin(115200);
   delay(300); // sanity delay
-  FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2);
+  FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2).setCorrection( CRGB( 255, 224, 140) );
   preferences.begin("meteo", false);
   latitude = preferences.getString("latitude", "45.49");
   longitude = preferences.getString("longitude", "-75.62");
   forecast = preferences.getString("forecast", "24");
   brightness = preferences.getUInt("BRIGHT_ADDR", 50);
   color.r = preferences.getUInt("RED_ADDR", 255);
-  color.g = preferences.getUInt("GREEN_ADDR", 255);
+  color.g = preferences.getUInt("GREEN_ADDR", 0);
   color.b = preferences.getUInt("BLUE_ADDR", 255);
   rouge = color.r;
   vert = color.g;
   bleu = color.b;
   effect = preferences.getUInt("EFFECT_ADDR", NO_EFFECT);
   weather = preferences.getUInt("WEATHER_ADDR", CLEAR);
-  derncoul = preferences.getString("derncoul", "#FFFFFF");
+  derncoul = preferences.getString("derncoul", "#FF00FF");
   change_state("setup");
   WiFiManager wifiManager;
   wifiManager.setTimeout(240);
   WiFi.disconnect(); // pour prevenir de bugs de power et autres
   delay(1000);
-  if (!wifiManager.autoConnect()) {
+  if (!wifiManager.autoConnect("meteo")) {
     delay(3000);
     ESP.restart();
     delay(5000);
@@ -891,7 +896,7 @@ void setup() {
   server.begin();
   MDNS.addService("_http", "_tcp", 80);
   request_weather();
-  xTaskCreate(loop1, "loop1", 4056, NULL, 1, NULL);
+  xTaskCreate(loop1, "loop1", 2048, NULL, 1, NULL);
   delay(200);
 }
 
