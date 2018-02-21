@@ -3,6 +3,7 @@
 // Based on work from Vagtsal, 14/7/2017
 //#define FASTLED_INTERRUPT_RETRY_COUNT 0
 //#define FASTLED_ALLOW_INTERRUPTS 0
+#include "esp_system.h"
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <DNSServer.h>
@@ -11,6 +12,7 @@
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <FastLED.h>
+FASTLED_USING_NAMESPACE
 #include <Preferences.h>
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
