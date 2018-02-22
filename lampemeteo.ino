@@ -1,8 +1,6 @@
 // Wifi Lamp Project
 // Steve Olmstead 10/02/2018
 // Based on work from Vagtsal, 14/7/2017
-//#define FASTLED_INTERRUPT_RETRY_COUNT 0
-//#define FASTLED_ALLOW_INTERRUPTS 0
 #include "esp_system.h"
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -25,11 +23,11 @@ String forecast;
 String meteo;
 String msg;
 String derncoul = "";
-#define LED_PIN1     18
+#define LED_PIN1    13
 #define COLOR_ORDER GRB
 #define CHIPSET     WS2812B
 #define NUM_LEDS    18
-#define NUM_LEDS2    108
+#define NUM_LEDS2   108
 #define COOLING  55
 #define SPARKING 65
 #define FRAMES_PER_SECOND 120
@@ -46,13 +44,19 @@ int CLOUDS     =   2;
 int RAIN       =   3;
 int THUNDERSTORM = 4;
 int SNOW        =  5;
-WebServer server(80);
+WebServer serveur(80);
 int rouge = 0;
 int vert = 0;
 int bleu = 0;
 int runshow = 0;
 int change = 1;
-int travaille = 0;
+unsigned long deuxMillis = 0;
+const long interval = 5000;
+unsigned int manageur = 0;
+
+void configModeCallback (WiFiManager *myWiFiManager) {
+  manageur = 1;
+}
 
 // convert string 2 char*
 char* string2char(String command) {
@@ -63,8 +67,6 @@ char* string2char(String command) {
 }
 
 void change_state(String choice) {
-  travaille = 1;
-  vTaskDelay(50);
   if (choice == "r\n") {
     rouge = color.r;
     preferences.putUInt("RED_ADDR", color.r);
@@ -136,8 +138,6 @@ void change_state(String choice) {
   }
   // exponential mapping
   runshow = 1;
-  vTaskDelay(50);
-  travaille = 0;
 }
 
 static byte heat[NUM_LEDS];
@@ -610,17 +610,13 @@ void snowing() {
 }
 
 void handleWeatherSettings() {                                                                // WEATHER SETTINGS PAGE
-  if (server.hasArg("Latitude") && server.hasArg("Longitude") && server.hasArg("Forecast")) {
-    latitude = server.arg("Latitude");
-    longitude = server.arg("Longitude");
-    forecast = server.arg("Forecast");
-    travaille = 1;
-    vTaskDelay(50);
+  if (serveur.hasArg("Latitude") && serveur.hasArg("Longitude") && serveur.hasArg("Forecast")) {
+    latitude = serveur.arg("Latitude");
+    longitude = serveur.arg("Longitude");
+    forecast = serveur.arg("Forecast");
     preferences.putString("latitude", latitude);
     preferences.putString("longitude", longitude);
     preferences.putString("forecast", forecast);
-    vTaskDelay(50);
-    travaille = 0;
     msg = "Sauvegargde r&eacute;ussie !";
     request_weather();
   }
@@ -650,28 +646,23 @@ void handleWeatherSettings() {                                                  
   content += "document.getElementById(\"Lat\").value=lat; document.getElementById(\"Lng\").value=lng;});}</script>";
   content += "<script src=\"https://maps.googleapis.com/maps/api/js?key=" + googleMapsID + "&callback=myMap\"></script>";
   content += "</body></html>";
-  server.send(200, "text/html", content);
+  serveur.send(200, "text/html", content);
   msg = "";
 }
 
 void handleRoot() {                                                                               // MAIN PAGE
-  //  if (!server.authenticate(username, string2char(pass))) {
-  //    return server.requestAuthentication();
+  //  if (!serveur.authenticate(username, string2char(pass))) {
+  //    return serveur.requestAuthentication();
   //  }
-  if (server.hasArg("COULEUR")) {
-    String testteu = server.arg("COULEUR");
+  if (serveur.hasArg("COULEUR")) {
+    String testteu = serveur.arg("COULEUR");
     if (testteu != 0) {
       derncoul = testteu;
       long number = strtol( &testteu[1], NULL, 16);
       color.r = number >> 16;
       color.g = number >> 8 & 0xFF;
       color.b = number & 0xFF;
-      //vTaskDelay(20);
-      travaille = 1;
-      vTaskDelay(50);
       preferences.putString("derncoul", derncoul);
-      vTaskDelay(50);
-      travaille = 0;
       if (color.r != rouge) {
         change_state("nw\n");
         change_state("r\n");
@@ -686,8 +677,8 @@ void handleRoot() {                                                             
       }
     }
   }
-  if (server.hasArg("Effect")) {
-    if (server.arg("Effect") == "Fire") {
+  if (serveur.hasArg("Effect")) {
+    if (serveur.arg("Effect") == "Fire") {
       if (effect != FIRE) {
         change_state("f\n");
       }
@@ -695,7 +686,7 @@ void handleRoot() {                                                             
         change_state("nf\n");
       }
     }
-    if (server.arg("Effect") == "Weather") {
+    if (serveur.arg("Effect") == "Weather") {
       if (effect != WEATHER) {
         change_state("w\n");
       }
@@ -704,8 +695,8 @@ void handleRoot() {                                                             
       }
     }
   }
-  if (server.hasArg("Brightness")) {
-    if (server.arg("Brightness") == "+") {
+  if (serveur.hasArg("Brightness")) {
+    if (serveur.arg("Brightness") == "+") {
       if (brightness <= 75) {
         change_state("bu\n");
       }
@@ -713,7 +704,7 @@ void handleRoot() {                                                             
         brightness = 100;
       }
     }
-    else if (server.arg("Brightness") == "-") {
+    else if (serveur.arg("Brightness") == "-") {
       if (brightness >= 25) {
         change_state("bd\n");
       } else {
@@ -746,22 +737,22 @@ void handleRoot() {                                                             
   content += "</form><br>\n";
   content += "<a href='/weather_settings'>R&eacute;glages m&eacute;t&eacute;o</a><br><br>\n";
   content += "</body></html>\n";
-  server.send(200, "text/html", content);
+  serveur.send(200, "text/html", content);
 }
 
 void handleNotFound() {                             // NOT FOUND PAGE
   String message = "File Not Found\n\n";
   message += "URI: ";
-  message += server.uri();
+  message += serveur.uri();
   message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += (serveur.method() == HTTP_GET) ? "GET" : "POST";
   message += "\nArguments: ";
-  message += server.args();
+  message += serveur.args();
   message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  for (uint8_t i = 0; i < serveur.args(); i++) {
+    message += " " + serveur.argName(i) + ": " + serveur.arg(i) + "\n";
   }
-  server.send(404, "text/plain", message);
+  serveur.send(404, "text/plain", message);
 }
 
 void request_weather() {
@@ -769,12 +760,8 @@ void request_weather() {
   int noOfBrackets;
   HTTPClient http;
   String url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude + "&APPID=" + openWeatherID;
-  travaille = 1;
-  vTaskDelay(50);
   http.begin(url);
   http.GET();
-  vTaskDelay(50);
-  travaille = 0;
   if (forecast == "0") {
     noOfBrackets = 1;
   }
@@ -853,7 +840,7 @@ void request_weather() {
 
 void loop1(void *pvParameters) {
   while (1) {
-    server.handleClient();
+    serveur.handleClient();
     unsigned long now = millis();
     if (now > HOURS_TO_REQUEST_WEATHER * 3600000 && ((now - timerd) > HOURS_TO_REQUEST_WEATHER * 3600000 || (now - timerd) < 0)) {
       timerd = millis();
@@ -866,7 +853,7 @@ void loop1(void *pvParameters) {
 void setup() {
   //Serial.begin(115200);
   delay(300); // sanity delay
-  FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2).setCorrection( CRGB( 255, 224, 140) );
+  FastLED.addLeds<CHIPSET, LED_PIN1, COLOR_ORDER>(leds1, NUM_LEDS2).setCorrection( CRGB( 185, 160, 100) );
   preferences.begin("meteo", false);
   latitude = preferences.getString("latitude", "45.49");
   longitude = preferences.getString("longitude", "-75.62");
@@ -883,27 +870,39 @@ void setup() {
   derncoul = preferences.getString("derncoul", "#FF00FF");
   change_state("setup");
   WiFiManager wifiManager;
+  wifiManager.setAPCallback(configModeCallback); //cree un callback pour savoir si passer par wifimanager
   wifiManager.setTimeout(240);
   WiFi.disconnect(); // pour prevenir de bugs de power et autres
-  delay(1000);
+  delay(500);
   if (!wifiManager.autoConnect("meteo")) {
     delay(3000);
     ESP.restart();
     delay(5000);
   }
+  delay(500);
+  if (manageur == 1) { // reboot si nouvelle config de wifimanager pour eviter bug de webserver qui roule pas
+    ESP.restart();
+    delay(5000);
+  }
   MDNS.begin("meteo");
-  server.on("/", handleRoot);
-  server.on("/weather_settings", handleWeatherSettings);
-  server.onNotFound(handleNotFound);
-  server.begin();
+  serveur.on("/", handleRoot);
+  serveur.on("/weather_settings", handleWeatherSettings);
+  serveur.onNotFound(handleNotFound);
+  serveur.begin();
   MDNS.addService("_http", "_tcp", 80);
   request_weather();
-  xTaskCreate(loop1, "loop1", 8192, NULL, 1, NULL);
+  xTaskCreatePinnedToCore(loop1, "loop1", 8192, NULL, 1, NULL, 0);
   delay(200);
 }
 
 void loop() {
-  while (travaille == 0) {
+    unsigned long unMillis = millis();
+    if (unMillis - deuxMillis >= interval) {
+      deuxMillis = unMillis;
+      if (WiFi.status() != WL_CONNECTED) {
+        WiFi.begin();
+      }
+    }
     if (effect == FIRE) {
       Fire2012(leds1);
       FastLED.delay(random(900, 3000) / FRAMES_PER_SECOND);
@@ -954,12 +953,11 @@ void loop() {
     }
     if (runshow != 0) {
       runshow = 0;
-      FastLED.setBrightness(map(brightness, 0, 100, 0, 255));
+      FastLED.setBrightness(map(brightness, 0, 100, 0, 210));
     }
     if (change != 0) {
       change = 0;
       FastLED.show();
     }
     FastLED.delay(1000 / FRAMES_PER_SECOND);
-  }
 }
