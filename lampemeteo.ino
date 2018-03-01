@@ -14,8 +14,8 @@ FASTLED_USING_NAMESPACE
 #include <Preferences.h>
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
-String openWeatherID = "b26028bf0fdc805144238f7962b46307";
-String googleMapsID = "AIzaSyALE5CnnsnrJDq6YMSaolVtGGQAPHT316g";
+String openWeatherID = "YourKeyHere";
+String googleMapsID = "YourKeyHere";
 unsigned long timerd = 0;
 String latitude;
 String longitude;
