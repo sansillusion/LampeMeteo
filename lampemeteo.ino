@@ -14,8 +14,8 @@ FASTLED_USING_NAMESPACE
 #include <Preferences.h>
 Preferences preferences;
 #define HOURS_TO_REQUEST_WEATHER 1
-String openWeatherID = "YourKeyHere";
-String googleMapsID = "YourKeyHere";
+String openWeatherID = "b26028bf0fdc805144238f7962b46307";
+String googleMapsID = "AIzaSyALE5CnnsnrJDq6YMSaolVtGGQAPHT316g";
 unsigned long timerd = 0;
 String latitude;
 String longitude;
@@ -30,7 +30,7 @@ String derncoul = "";
 #define NUM_LEDS2   108
 #define COOLING  55
 #define SPARKING 65
-#define FRAMES_PER_SECOND 120
+int FRAMES_PER_SECOND = 80;
 CRGB leds1[NUM_LEDS2];
 CRGB color;
 int effect;
@@ -373,7 +373,7 @@ void raining() {
     }
     if (leds1[i + 18].b == 255) {
       leds1[i + 18].b = 15;
-      if (i + 18 != 18) {
+      if (i != 0) {
         leds1[i + 17].b = 255;
       }
     }
@@ -384,7 +384,7 @@ void raining() {
     }
     if (leds1[i + 36].b == 255) {
       leds1[i + 36].b = 15;
-      if (i + 36 != 36) {
+      if (i != 0) {
         leds1[i + 35].b = 255;
       }
     }
@@ -395,7 +395,7 @@ void raining() {
     }
     if (leds1[i + 54].b == 255) {
       leds1[i + 54].b = 15;
-      if (i + 54 != 54) {
+      if (i != 0) {
         leds1[i + 53].b = 255;
       }
     }
@@ -406,7 +406,7 @@ void raining() {
     }
     if (leds1[i + 72].b == 255) {
       leds1[i + 72].b = 15;
-      if (i + 72 != 72) {
+      if (i != 0) {
         leds1[i + 71].b = 255;
       }
     }
@@ -417,7 +417,7 @@ void raining() {
     }
     if (leds1[i + 90].b == 255) {
       leds1[i + 90].b = 15;
-      if (i + 90 != 90) {
+      if (i != 0) {
         leds1[i + 89].b = 255;
       }
     }
@@ -432,22 +432,22 @@ void raining() {
     int randomize = random8(6);
     switch (randomize) {
       case 0:
-        leds1[18 - 1].b = 255;
+        leds1[17].b = 255;
         break;
       case 1:
-        leds1[36 - 1].b = 255;
+        leds1[35].b = 255;
         break;
       case 2:
-        leds1[54 - 1].b = 255;
+        leds1[53].b = 255;
         break;
       case 3:
-        leds1[72 - 1].b = 255;
+        leds1[71].b = 255;
         break;
       case 4:
-        leds1[90 - 1].b = 255;
+        leds1[89].b = 255;
         break;
       case 5:
-        leds1[108 - 1].b = 255;
+        leds1[107].b = 255;
         break;
     }
   }
@@ -846,7 +846,7 @@ void loop1(void *pvParameters) {
       timerd = millis();
       request_weather();
     }
-    vTaskDelay( 128 ); // wait / yield time to other tasks
+    vTaskDelay( 50 / portTICK_PERIOD_MS ); // wait / yield time to other tasks
   }
 }
 
@@ -904,11 +904,13 @@ void loop() {
       }
     }
     if (effect == FIRE) {
+      FRAMES_PER_SECOND = 80;
       Fire2012(leds1);
       FastLED.delay(random(900, 3000) / FRAMES_PER_SECOND);
       change = 1;
     }
     if (effect == WEATHER) {
+      FRAMES_PER_SECOND = 50;
       int period0;
       int period1;
       int period2;
@@ -936,6 +938,7 @@ void loop() {
       weather_effect(leds1, period0, period1, period2, period3, period4, period5);
       change = 1;
       if (weather == RAIN || weather == THUNDERSTORM) {
+        FRAMES_PER_SECOND = 60;
         raining();
         if (weather == THUNDERSTORM) {
           int randomThunder = random8(100);
@@ -944,9 +947,9 @@ void loop() {
             change = 1;
           }
         }
-        FastLED.delay(1000 / 60);
       }
       else if (weather == SNOW) {
+        FRAMES_PER_SECOND = 80;
         snowing();
         change = 1;
       }
