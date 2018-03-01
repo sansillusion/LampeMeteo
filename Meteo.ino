@@ -904,9 +904,8 @@ void loop() {
       }
     }
     if (effect == FIRE) {
-      FRAMES_PER_SECOND = 80;
+      FRAMES_PER_SECOND = random(50, 80);
       Fire2012(leds1);
-      FastLED.delay(random(900, 3000) / FRAMES_PER_SECOND);
       change = 1;
     }
     if (effect == WEATHER) {
@@ -938,7 +937,7 @@ void loop() {
       weather_effect(leds1, period0, period1, period2, period3, period4, period5);
       change = 1;
       if (weather == RAIN || weather == THUNDERSTORM) {
-        FRAMES_PER_SECOND = 60;
+        FRAMES_PER_SECOND = 50;
         raining();
         if (weather == THUNDERSTORM) {
           int randomThunder = random8(100);
@@ -956,7 +955,7 @@ void loop() {
     }
     if (runshow != 0) {
       runshow = 0;
-      FastLED.setBrightness(map(brightness, 0, 100, 0, 210));
+      FastLED.setBrightness(map(brightness, 0, 100, 0, 190));
     }
     if (change != 0) {
       change = 0;
